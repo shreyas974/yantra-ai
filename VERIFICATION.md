@@ -16,13 +16,15 @@ Working checkout: `/home/shreyas/Projects/chad`. This record supersedes the arch
 | Firestore storage report | Fails honestly when emulator is unavailable; no usage fabricated |
 | Local listening socket probe | Fails with EPERM |
 | Live browser checks | Home renders, real zero participant/team counts, contact-form save confirmed in Firebase, organizer route redirects to sign-in |
-| Mobile breakpoint interaction | Unverified; requested viewport override retained the desktop document width |
+| Mobile breakpoint interaction | Verified at 375px: no horizontal overflow, mobile menu and auth layouts render |
 | Docker image execution | Not run; Docker socket access denied |
 | Vercel production release | Ready at https://yantra-ai-murex.vercel.app |
 | Firestore readiness | Live `/api/health` returned `ready: true` |
 | Live database writes | Labeled contact test, rate-limit bucket and audit entry persisted in the isolated database |
 | Production safe seed | Successful; build logs verified empty problem-statement storage |
-| Email delivery and first organizer | Firebase Authentication provisioned; native release deployment, delivery check and verified organizer registration pending |
+| Firebase sign-in and first organizer | Live: sign-up, sign-in and organizer bootstrap verified; inbox delivery of verification email not independently confirmed |
+| Participant workflow (live, via API) | Profile, team create/rename/invite/join/leave, notifications, account deletion verified; test data removed |
+| Firestore indexes | 10 composite indexes deployed and READY on the `yantra` database |
 
 ## Changes verified
 
@@ -32,16 +34,14 @@ Demo shortcuts require development mode, a loopback app URL, a loopback Firestor
 
 New transport-contract tests cover Firestore value encoding, emulator restrictions, nested atomic writes, uniqueness, rollback, aborted-commit retry, unique-key release and empty inclusion queries. These use a mocked REST transport and do **not** establish actual Firestore integration. Rate-limit tests cover shared counts and window expiry. Cron tests cover malformed bearer tokens and bounded cleanup with expiration rechecks.
 
-The supplied Firestore rules deny client access; server credentials use IAM. Compound index definitions are supplied for known filters. Index deployment and real query behavior remain unverified. The adapter retains a bounded scan limit for administrator substring/relational searches; large installations need paginated query paths beyond that bound.
+The supplied Firestore rules deny client access; server credentials use IAM. Compound index definitions are supplied for known filters. Indexes are deployed; live queries for dashboards, invitations and token claims were exercised. The adapter retains a bounded scan limit for administrator substring/relational searches; large installations need paginated query paths beyond that bound.
 
 ## Remaining release requirements
 
-Run the emulator integration and HTTP E2E commands from README.md in an environment permitting listening sockets. Verify desktop/mobile/keyboard flows in a browser. Complete the Vercel environment switch to the provisioned free Firebase project, configure the private maintenance secret, verify the exact HTTPS APP_URL and scheduled maintenance, and establish retention/recovery procedures. Run the real account-to-approval workflow in staging, including verification/reset email delivery.
-
-Official event details, approved rules, dates and problem statements remain organizer-supplied. Registration defaults closed. Production deployment and database connectivity are verified. Full account-to-team-to-approval E2E testing remains pending email setup and account creation. One clearly labeled contact-form test record remains in the production database for inspection.
+Organizers must publish official rules and open registration before participants can submit. Confirm that verification and reset emails reach real inboxes. Establish retention and recovery procedures. Upgrade to Next.js 16 and Zod 4 to clear dependency advisories (current advisories are build-time or not reachable from request schemas).
 
 ## Firebase-native update
 
 The current checkout adds Firebase privileged account creation, password authentication, built-in verification/reset email, five-day signed session cookies, Google signature/issuer/audience checks, authoritative disabled/revoked-account checks, in-app event notices, secure shareable invitations, verified-email initial administrator bootstrap and durable provider account-deletion retries. Ten mocked authentication tests cover creation/recovery, recent sign-in, valid sessions, mismatched claims, expiry, revocation, disabled users and email operations. These checks do not establish live delivery.
 
-The Spark project `yantra-ai-auth-2026`, email/password provider and default Firestore database were provisioned successfully. Server IAM grants were approved and applied. Vercel still requests an email code before its environment change can complete. The live release has not yet been switched. No new production account/password has been created.
+The live release uses Firebase Authentication in `yantra-ai-auth-2026` with data in the `yantra` database of `neurobots-hub-7274`.

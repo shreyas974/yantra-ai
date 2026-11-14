@@ -14,13 +14,19 @@ YANTRA AI is a Next.js Node application backed by Firebase Cloud Firestore. Depl
 - `FIREBASE_AUTH_PROJECT_ID` and `FIREBASE_AUTH_API_KEY` select Firebase email/password authentication and built-in verification/reset email. Enable Email/Password in the Firebase console. The API key is public project configuration but remains an environment value.
 - `GCP_SERVICE_ACCOUNT_PROJECT_ID` identifies the existing workload service account project when authentication/data are in a different project. Grant that identity Firebase Authentication Admin and database-scoped Cloud Datastore User in the target project.
 - `INITIAL_ADMIN_EMAIL` authorizes a one-time administrator bootstrap after authoritative email verification. No administrator password is seeded.
-- `ADMIN_EMAILS` lists additional explicitly approved organizer addresses, separated by commas. Each address receives a one-time audited grant only after Firebase verifies ownership. For this installation, the user approved `maheswariaiml@skit.org.in`. This production variable still needs to be applied with the Firebase deployment.
+- `ADMIN_EMAILS` lists additional explicitly approved organizer addresses, separated by commas. Each address receives a one-time audited grant only after Firebase verifies ownership. For this installation, the user approved `maheswariaiml@skit.org.in`. It is set in production.
 - `CRON_SECRET`: random private secret for maintenance. Vercel calls authenticated GET `/api/cron` daily using the schedule in `vercel.json`. Pending Firebase account deletions retry there. POST is also supported for operators.
 - Keep `TRUST_PROXY=false` unless the edge replaces untrusted client-IP headers.
 
-The approved target is `(default)` Standard Firestore in `yantra-ai-auth-2026`, Mumbai (`asia-south1`), under the Spark plan. It has deny-all client rules. `firebase.production.json` targets this default database and must be deployed with `--project yantra-ai-auth-2026`. Never use that configuration against Neurobots Hub's unrelated default database. The workload service account remains in `neurobots-hub-7274` and has a conditional database grant in the new project. Its authentication grant is separately scoped to the new project.
+Production runs at https://yantra-ai-murex.vercel.app (Vercel project `neurobots1/yantra-ai`):
 
-The current live release still uses the previous isolated Blaze database until Vercel environment changes and the new release complete. No participant records existed at the last verified check. The labeled contact-form test remains in the previous database. Safe seeding creates missing generic configuration in the new database and preserves empty problem-statement storage.
+- **Data:** Cloud Firestore database `yantra` in `neurobots-hub-7274` (`asia-south1`), namespace `yantra`, with the composite indexes in `firebase/firestore.indexes.json`.
+- **Sign-in:** Firebase Authentication in `yantra-ai-auth-2026` (email/password, built-in verification and reset emails).
+- **Server identity:** keyless Vercel workload identity federation to `yantra-server@neurobots-hub-7274.iam.gserviceaccount.com`, which holds Firebase Authentication Admin on `yantra-ai-auth-2026`.
+- **Organizers:** granted only to verified addresses in `INITIAL_ADMIN_EMAIL` / `ADMIN_EMAILS`; organizers use the console only and are excluded from participant data.
+- **Maintenance:** `CRON_SECRET` is set; Vercel calls `/api/cron` daily.
+
+`firebase.json` and `firebase.production.json` both read indexes from `firebase/firestore.indexes.json`. Deploy indexes only to the database the app uses (`--project neurobots-hub-7274`, database `yantra`); never point these configs at Neurobots Hub's unrelated `(default)` database. The `yantra-ai-auth-2026` `(default)` database exists but is unused, because `yantra-server` has no data grant there.
 
 Run `npm ci`, `npm run db:seed`, `npm run typecheck`, `npm test` and `npm run build` with the appropriate environment. Seeding is insert-only and leaves registration closed. Do not point the demo or automated test launchers at production.
 
@@ -36,7 +42,7 @@ The Compose service loads `.env` and binds to loopback port 3000; place an HTTPS
 
 Before opening registration, verify `/api/health`, registration and real verification delivery, password reset, profile saving, invite/join, submission, organizer approval and notifications. Check desktop/mobile navigation and keyboard forms in a browser. Configure scheduled authenticated requests to `/api/cron` using the method and authorization defined in its route. Check backups, retention, usage/billing alerts and recovery procedures in the Firebase project.
 
-The first production release is available at https://yantra-ai-murex.vercel.app. A dedicated `yantra-server` service identity and production-only Vercel workload identity provider have been provisioned. Its existing grant on the previous database is preserved. The approved cross-project grants for the free database and authentication project have been added. The new release still needs Vercel configuration, deployment and live account checks. Local emulator and Docker execution remain unavailable in this workspace.
+Live verification (14 November 2026): sign-up, Firebase sign-in, profile save, team create/rename/invite/join/leave, notifications, password reset and resend-verification requests, account deletion, organizer-only console access and participant/organizer separation. Registration submission correctly stays closed until organizers publish rules and open registration. The local Firestore emulator on the development machine hangs on transactional reads, so portal UI was verified on production through the API.
 
 Keep the project and hosting enabled through 25 November 2026. No shutdown or expiry is configured. Free service availability depends on provider quotas and account status. The requested hosting duration does not set an official hackathon date.
 

@@ -15,7 +15,15 @@ Official event dates, venue, rules, sponsors, awards and problem statements must
 
 ## Live deployment
 
-Open https://yantra-ai-murex.vercel.app. The last verified release uses the isolated `yantra` database in Neurobots Hub. The current checkout prepares the approved switch to the dedicated Spark project `yantra-ai-auth-2026`, its `(default)` Firestore database and Firebase Authentication. Both Firebase services and server IAM grants have been provisioned. Vercel environment updates and deployment still require its email verification step. This checkout's Firebase-native account workflow has automated coverage, while live email delivery and participant-to-approval verification remain pending.
+Production runs at https://yantra-ai-murex.vercel.app (Vercel project `neurobots1/yantra-ai`):
+
+- **Data:** Cloud Firestore database `yantra` in `neurobots-hub-7274` (`asia-south1`), namespace `yantra`, with the composite indexes in `firebase/firestore.indexes.json`.
+- **Sign-in:** Firebase Authentication in `yantra-ai-auth-2026` (email/password, built-in verification and reset emails).
+- **Server identity:** keyless Vercel workload identity federation to `yantra-server@neurobots-hub-7274.iam.gserviceaccount.com`, which holds Firebase Authentication Admin on `yantra-ai-auth-2026`.
+- **Organizers:** granted only to verified addresses in `INITIAL_ADMIN_EMAIL` / `ADMIN_EMAILS`; organizers use the console only and are excluded from participant data.
+- **Maintenance:** `CRON_SECRET` is set; Vercel calls `/api/cron` daily.
+
+Moving the data into `yantra-ai-auth-2026` would first require granting `yantra-server` Cloud Datastore User there; that grant does not exist today, so data stays in `neurobots-hub-7274`.
 
 ## Local development
 

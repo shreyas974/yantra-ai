@@ -6,4 +6,10 @@ Configure the server-only production variables listed in [DEPLOYMENT.md](DEPLOYM
 
 The readiness endpoint `/api/health` returns 200 only when the database responds; successful compilation alone does not verify the deployment. Validate real email delivery and the full participant/organizer workflow before opening registration. Schedule the outbox retry route and monitor failures.
 
-Production is deployed at https://yantra-ai-murex.vercel.app. The release `8fafYR8LwT9Ga1bEAenEHZ2qs6VV` completed successfully on 14 November 2026. Google workload identity federation connects it to the isolated `yantra` database in `neurobots-hub-7274`. Live database readiness and contact-message persistence were verified. The build log confirms safe configuration seeding and empty problem-statement storage. The current checkout prepares a switch to the dedicated free Firebase project and built-in authentication email. Vercel email verification, environment changes, the new deployment and first verified organizer account remain pending.
+Production runs at https://yantra-ai-murex.vercel.app (Vercel project `neurobots1/yantra-ai`):
+
+- **Data:** Cloud Firestore database `yantra` in `neurobots-hub-7274` (`asia-south1`), namespace `yantra`, with the composite indexes in `firebase/firestore.indexes.json`.
+- **Sign-in:** Firebase Authentication in `yantra-ai-auth-2026` (email/password, built-in verification and reset emails).
+- **Server identity:** keyless Vercel workload identity federation to `yantra-server@neurobots-hub-7274.iam.gserviceaccount.com`, which holds Firebase Authentication Admin on `yantra-ai-auth-2026`.
+- **Organizers:** granted only to verified addresses in `INITIAL_ADMIN_EMAIL` / `ADMIN_EMAILS`; organizers use the console only and are excluded from participant data.
+- **Maintenance:** `CRON_SECRET` is set; Vercel calls `/api/cron` daily.
