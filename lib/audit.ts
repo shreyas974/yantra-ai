@@ -1,4 +1,4 @@
-import { prisma } from "./db";
+import { db } from "./db";
 
 export interface AuditLogParams {
   userId?: string | null;
@@ -11,7 +11,7 @@ export interface AuditLogParams {
 
 export async function logAuditEvent(params: AuditLogParams) {
   try {
-    await prisma.auditLog.create({
+    await db.auditLog.create({
       data: {
         userId: params.userId || null,
         action: params.action,

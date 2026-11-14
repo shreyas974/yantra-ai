@@ -10,14 +10,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0a0a12",
-        foreground: "#ededef",
+        background: "#101713",
+        foreground: "#f4f2e9",
         surface: {
-          DEFAULT: "#121222",
-          border: "#1f1f3a",
-          muted: "#18182e",
+          DEFAULT: "#18211c",
+          border: "#2d3a31",
+          muted: "#202c24",
         },
-        chad: {
+        yantra: {
           violet: "#8b5cf6",
           cyan: "#06b6d4",
           lime: "#10b981",

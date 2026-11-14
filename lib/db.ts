@@ -1,11 +1,3 @@
-import { PrismaClient } from "@prisma/client";
-
-declare global {
-  var prismaGlobal: PrismaClient | undefined;
-}
-
-export const prisma = globalThis.prismaGlobal ?? new PrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalThis.prismaGlobal = prisma;
-}
+// All active persistence is backed by Firebase Cloud Firestore.
+export { database as db } from './firebase/repository';
+export type { Database } from './firebase/repository';

@@ -1,125 +1,29 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
-import { Bell, Send, Trash2 } from "lucide-react";
-
-export default function AdminAnnouncementsPage() {
-  const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [status, setStatus] = useState<"DRAFT" | "PUBLISHED" | "SCHEDULED">("PUBLISHED");
-  const [loading, setLoading] = useState(true);
-
-  const loadAnnouncements = () => {
-    fetch("/api/admin/announcements")
-      .then((res) => res.json())
-      .then((data) => setAnnouncements(data.announcements || []))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    loadAnnouncements();
-  }, []);
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch("/api/admin/announcements", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content, status }),
-      });
-      if (res.ok) {
-        setTitle("");
-        setContent("");
-        loadAnnouncements();
-      }
-    } catch {
-      alert("Failed to publish announcement");
+'use client';
+import { useEffect, useState } from 'react';
+const blank = { id: '', title: '', content: '', status: 'DRAFT', scheduledFor: '', sendEmail: false };
+export default function Page() {
+    const [items, setItems] = useState<any[]>([]), [form, setForm] = useState(blank), [message, setMessage] = useState(''), [busy, setBusy] = useState(false), [firebaseMode, setFirebaseMode] = useState(true);
+    async function load() { const r = await fetch('/api/admin/announcements'); const d = await r.json(); setItems(d.announcements || []); }
+    useEffect(() => { load(); fetch('/api/auth/me').then(r => r.json()).then(d => setFirebaseMode(d.authMode === 'firebase')); }, []);
+    async function save(e: React.FormEvent) { e.preventDefault(); setBusy(true); try {
+        const r = await fetch('/api/admin/announcements', { method: form.id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, id: form.id || undefined, scheduledFor: form.scheduledFor ? new Date(form.scheduledFor).toISOString() : null }) });
+        const d = await r.json();
+        if (!r.ok)
+            throw Error(d.error);
+        setForm(blank);
+        setMessage('Announcement saved.');
+        load();
     }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete announcement?")) return;
-    await fetch(`/api/admin/announcements?id=${id}`, { method: "DELETE" });
-    loadAnnouncements();
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="p-6 rounded-2xl bg-surface border border-surface-border space-y-4">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <Bell className="w-5 h-5 text-cyan-400" />
-          Create Hackathon Announcement
-        </h2>
-
-        <form onSubmit={handleCreate} className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-300 mb-1">Title *</label>
-            <input
-              type="text"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-lg bg-background border border-surface-border text-white text-xs focus:border-cyan-400 focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-300 mb-1">Content *</label>
-            <textarea
-              required
-              rows={4}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-lg bg-background border border-surface-border text-white text-xs focus:border-cyan-400 focus:outline-none resize-none"
-            ></textarea>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <select
-              value={status}
-              onChange={(e: any) => setStatus(e.target.value)}
-              className="px-3 py-1.5 rounded-lg bg-background border border-surface-border text-xs text-white"
-            >
-              <option value="PUBLISHED">Publish Immediately</option>
-              <option value="DRAFT">Save as Draft</option>
-            </select>
-
-            <button
-              type="submit"
-              className="px-5 py-2 rounded-lg font-bold text-black bg-cyan-400 hover:bg-cyan-300 text-xs flex items-center gap-1.5"
-            >
-              <Send className="w-3.5 h-3.5" />
-              Submit
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div className="space-y-3">
-        <h3 className="text-xs uppercase font-mono text-gray-400 tracking-wider">Existing Announcements</h3>
-        {announcements.map((a) => (
-          <div key={a.id} className="p-4 rounded-xl bg-surface border border-surface-border flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-bold text-white">{a.title}</h4>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-muted text-cyan-400 font-mono">
-                  {a.status}
-                </span>
-              </div>
-              <p className="text-xs text-gray-300 mt-1 whitespace-pre-line">{a.content}</p>
-            </div>
-            <button
-              onClick={() => handleDelete(a.id)}
-              className="p-1.5 text-gray-400 hover:text-red-400"
-              title="Delete"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+    catch (e) {
+        setMessage(String(e));
+    }
+    finally {
+        setBusy(false);
+    } }
+    async function remove(id: string) { if (!confirm('Delete announcement?'))
+        return; const r = await fetch('/api/admin/announcements', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, confirm: true }) }); if (r.ok)
+        load();
+    else
+        setMessage('Deletion failed.'); }
+    return <div className="space-y-6"><h1 className="text-3xl font-bold">Announcements</h1><p role="status">{message}</p><form onSubmit={save} className="panel p-6 space-y-4"><label className="field">Title<input required minLength={3} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}/></label><label className="field">Message<textarea required minLength={5} rows={5} value={form.content} onChange={e => setForm({ ...form, content: e.target.value })}/></label><label className="field">Publication<select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}><option>DRAFT</option><option>PUBLISHED</option><option>SCHEDULED</option></select></label>{form.status === 'SCHEDULED' && <label className="field">Publish at (browser timezone)<input required type="datetime-local" value={form.scheduledFor.slice(0, 16)} onChange={e => setForm({ ...form, scheduledFor: e.target.value })}/></label>}{form.status === 'PUBLISHED' && !firebaseMode && <label className="flex gap-3"><input type="checkbox" checked={form.sendEmail} onChange={e => setForm({ ...form, sendEmail: e.target.checked })}/>Also email verified participants</label>}<div className="flex gap-3"><button disabled={busy} className="btn-primary">{busy ? 'Saving…' : 'Save announcement'}</button><button type="button" className="btn-secondary" onClick={() => setForm(blank)}>Clear form</button></div></form>{!items.length && <p className="text-gray-400">No announcements yet.</p>}{items.map(i => <article className="panel p-5 space-y-3" key={i.id}><p className="eyebrow">{i.status}{i.scheduledFor && ` · ${new Date(i.scheduledFor).toLocaleString()}`}</p><h2 className="text-xl">{i.title}</h2><p className="text-gray-300 whitespace-pre-wrap">{i.content}</p><div className="flex gap-4"><button className="btn-secondary" onClick={() => setForm({ ...blank, ...i, scheduledFor: i.scheduledFor || '' })}>Edit</button><button className="text-red-300" onClick={() => remove(i.id)}>Delete</button></div></article>)}</div>;
 }

@@ -1,16 +1,15 @@
 export default function PrivacyPage() {
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-16 space-y-8">
+    return (<div className="max-w-4xl mx-auto px-4 py-16 space-y-8">
       <div className="space-y-2">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Privacy Policy</h1>
-        <p className="text-sm text-gray-400 font-mono">Last updated: November 2026</p>
+        <p className="text-sm text-gray-400 font-mono">Organizer review required before public launch.</p>
       </div>
 
       <div className="space-y-6 text-sm text-gray-300 leading-relaxed">
         <section className="space-y-2">
           <h2 className="text-lg font-bold text-white">1. Information We Collect</h2>
           <p>
-            When you register for CHAD, we collect your email address, full name, organization or educational institution, technical skills, AI/ML experience, and optional professional profile links.
+            When you register for YANTRA AI, we collect your email address, full name, organization or educational institution, technical skills, AI/ML experience, and optional professional profile links.
           </p>
         </section>
 
@@ -31,10 +30,9 @@ export default function PrivacyPage() {
         <section className="space-y-2">
           <h2 className="text-lg font-bold text-white">4. Account and Data Deletion</h2>
           <p>
-            Participants may request account or profile data deletion prior to registration approval by contacting the organizing team or submitting a removal request.
+            Delete your account in Dashboard → Account settings after leaving your team. For locked registrations, contact the organizers. Profiles, sessions and notifications are deleted; audit history retains actions with a null account reference. Organizers must publish their controller identity, retention period and privacy contact before launch.
           </p>
         </section>
       </div>
-    </div>
-  );
+    </div>);
 }

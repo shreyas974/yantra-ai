@@ -9,3 +9,15 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 *.local
+
+*.tsbuildinfo
+coverage/
+
+.vercel/
+work/preview/
+.vercel
+.env*
+
+# Local working copies, screenshots and emulator logs
+work/
+*-debug.log

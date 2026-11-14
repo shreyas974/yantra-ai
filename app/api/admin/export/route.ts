@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { generateCsv } from "@/lib/csv";
 import { logAuditEvent } from "@/lib/audit";
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   });
 
   if (type === "teams") {
-    const teams = await prisma.team.findMany({
+    const teams = await db.team.findMany({
       include: {
         members: {
           include: {
@@ -61,13 +61,14 @@ export async function GET(req: NextRequest) {
     return new NextResponse(csvContent, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="chad-teams-${Date.now()}.csv"`,
+        "Content-Disposition": `attachment; filename="yantra-teams-${Date.now()}.csv"`,
       },
     });
   }
 
   // Participants export
-  const participants = await prisma.user.findMany({
+  const participants = await db.user.findMany({
+    where: { role: "USER" },
     include: {
       profile: true,
       teamMembership: {
@@ -117,7 +118,7 @@ export async function GET(req: NextRequest) {
   return new NextResponse(csvContent, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="chad-participants-${Date.now()}.csv"`,
+      "Content-Disposition": `attachment; filename="yantra-participants-${Date.now()}.csv"`,
     },
   });
 }

@@ -1,31 +1,4 @@
-import { getEventConfigMap } from "@/lib/event-config";
-import { Trophy, Award, Gift } from "lucide-react";
-
-export const dynamic = "force-dynamic";
-
-export default async function PrizesPage() {
-  const config = await getEventConfigMap();
-  const prizesText = config["prizes"] || "To be announced.";
-
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-16 space-y-12">
-      <div className="text-center space-y-3">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-white">Prizes & Recognitions</h1>
-        <p className="text-gray-400">Rewarding groundbreaking innovation in Artificial Intelligence.</p>
-      </div>
-
-      <div className="p-8 rounded-2xl bg-surface border border-surface-border text-center space-y-4">
-        <div className="w-16 h-16 rounded-2xl bg-violet-950/40 border border-violet-500/30 flex items-center justify-center mx-auto">
-          <Trophy className="w-8 h-8 text-amber-400" />
-        </div>
-        <h2 className="text-2xl font-bold text-white">Prize Pool & Track Awards</h2>
-        <p className="text-cyan-400 font-mono text-lg font-semibold">
-          {prizesText === "To be announced." ? "To be announced." : prizesText}
-        </p>
-        <p className="text-xs text-gray-400 max-w-md mx-auto">
-          Official prize structures, sponsor bounties, and certificate criteria will be published by the organizing committee.
-        </p>
-      </div>
-    </div>
-  );
-}
+import { publicContent } from '@/lib/content';
+import { Trophy } from 'lucide-react';
+export const dynamic = 'force-dynamic';
+export default async function Page() { const event = await publicContent(); const prizes = event?.prizes.length ? event.prizes : [{ id: 'first', title: 'First place', description: 'To Be Announced' }, { id: 'second', title: 'Second place', description: 'To Be Announced' }, { id: 'third', title: 'Third place', description: 'To Be Announced' }]; return <div className="max-w-6xl mx-auto px-6 py-20 space-y-10"><p className="eyebrow">MAKE YOUR MARK</p><h1 className="text-5xl font-bold">Prizes & recognition</h1><p className="text-gray-400">Official award details will be published by the organizers.</p><div className="grid md:grid-cols-3 gap-5">{prizes.map((p, i) => <article className="panel p-8 space-y-6" key={p.id}><Trophy className={i === 0 ? 'text-orange-200' : 'text-emerald-200'} size={40} strokeWidth={1}/><h2 className="text-2xl font-bold">{p.title}</h2><p className="text-gray-400 whitespace-pre-wrap">{p.description}</p></article>)}</div></div>; }

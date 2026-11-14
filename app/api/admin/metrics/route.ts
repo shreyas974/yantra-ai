@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export async function GET() {
@@ -17,13 +17,13 @@ export async function GET() {
     rejectedSubmissions,
     unreadMessages,
   ] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { emailVerified: true } }),
-    prisma.team.count(),
-    prisma.registrationSubmission.count({ where: { status: "PENDING" } }),
-    prisma.registrationSubmission.count({ where: { status: "APPROVED" } }),
-    prisma.registrationSubmission.count({ where: { status: "REJECTED" } }),
-    prisma.contactMessage.count({ where: { isRead: false } }),
+    db.user.count({ where: { role: "USER" } }),
+    db.user.count({ where: { role: "USER", emailVerified: true } }),
+    db.team.count(),
+    db.registrationSubmission.count({ where: { status: "PENDING" } }),
+    db.registrationSubmission.count({ where: { status: "APPROVED" } }),
+    db.registrationSubmission.count({ where: { status: "REJECTED" } }),
+    db.contactMessage.count({ where: { isRead: false } }),
   ]);
 
   return NextResponse.json({

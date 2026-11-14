@@ -1,0 +1,61 @@
+import nextEnv from '@next/env';
+import { PrismaClient } from '@prisma/client';
+import { spawn } from 'node:child_process';
+
+nextEnv.loadEnvConfig(process.cwd());
+const localHosts = ['localhost', '127.0.0.1', '[::1]'];
+let db;
+try { db = new URL(process.env.DATABASE_URL || ''); }
+catch { throw new Error('Copy .env.example to .env and configure your local DATABASE_URL first.'); }
+if (!localHosts.includes(db.hostname)) throw new Error('Local demo requires a loopback PostgreSQL host. Your main configuration has not been changed.');
+const port = Number(process.env.DEMO_PORT || 3000);
+if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('DEMO_PORT must be a port between 1024 and 65535.');
+db.searchParams.set('schema', 'chad_demo');
+const env = { ...process.env, NODE_ENV: 'development', LOCAL_DEMO: 'true', DATABASE_URL: db.toString(), APP_URL: `http://127.0.0.1:${port}`, EMAIL_MODE: 'file' };
+
+function run(command, args, quiet = false) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { env, stdio: quiet ? 'ignore' : 'inherit' });
+    child.once('error', reject);
+    child.once('close', code => resolve(code ?? 1));
+  });
+}
+async function required(command, args) {
+  if (await run(command, args) !== 0) throw new Error(`${command} could not complete. Check the message above.`);
+}
+const client = new PrismaClient({ datasources: { db: { url: env.DATABASE_URL } } });
+async function ready() { try { await client.$queryRaw`SELECT 1`; return true; } catch { return false; } }
+try {
+  if (!(await ready())) {
+    console.log('Local PostgreSQL is not reachable. Trying the existing PostgreSQL container or Compose service…');
+    let existing = false;
+    try { existing = await run('docker', ['container', 'inspect', '--format', '{{.State.Running}}', 'chad-postgres'], true) === 0; } catch {}
+    if (existing) await required('docker', ['start', 'chad-postgres']);
+    else {
+      env.POSTGRES_PASSWORD = decodeURIComponent(db.password);
+      if (!env.POSTGRES_PASSWORD) throw new Error('Set a database password in DATABASE_URL before starting Compose.');
+      await required('docker', ['compose', 'up', '-d', 'postgres']);
+    }
+    for (let attempt = 0; attempt < 30; attempt++) {
+      if (await ready()) break;
+      if (attempt === 29) throw new Error('PostgreSQL did not become ready. Check its port and credentials in .env.');
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+  await client.$disconnect();
+  await required('npm', ['run', 'db:migrate']);
+  await required('npm', ['run', 'db:seed']);
+  await required('node', ['--import', 'tsx', 'scripts/seed-local-demo.ts']);
+  console.log(`\nYANTRA AI LOCAL DEMO: ${env.APP_URL}/guest`);
+  console.log('Choose “Try student dashboard” or “Try organizer dashboard”.');
+  console.log('All changes use the isolated chad_demo schema. Press Ctrl+C to stop.\n');
+  const server = spawn('node', ['node_modules/next/dist/bin/next', 'dev', '--hostname', '127.0.0.1', '--port', String(port)], { env, stdio: 'inherit' });
+  const stop = signal => server.kill(signal);
+  process.once('SIGINT', () => stop('SIGINT'));
+  process.once('SIGTERM', () => stop('SIGTERM'));
+  server.once('error', error => { console.error(error.message); process.exitCode = 1; });
+  await new Promise(resolve => server.once('close', code => { process.exitCode = code ?? 1; resolve(); }));
+} catch (error) {
+  console.error(`Local demo could not start: ${error.message}`);
+  process.exitCode = 1;
+} finally { await client.$disconnect(); }

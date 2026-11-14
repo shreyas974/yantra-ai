@@ -1,0 +1,20 @@
+import { statfs } from 'node:fs/promises';
+import { loadEnvConfig } from '@next/env';
+loadEnvConfig(process.cwd());
+async function main() {
+  const disk = await statfs(process.cwd());
+  console.log('Local workspace filesystem (not a cloud allocation):');
+  console.log(`Total: ${(disk.blocks * disk.bsize / 1024 ** 3).toFixed(1)} GiB`);
+  console.log(`Available to this OS user: ${(disk.bavail * disk.bsize / 1024 ** 3).toFixed(1)} GiB`);
+  const { prisma } = await import('../lib/db');
+  try {
+    const rows = await prisma.$queryRaw<{ bytes: bigint }[]>`SELECT pg_database_size(current_database()) AS bytes`;
+    console.log(`PostgreSQL database size: ${(Number(rows[0].bytes) / 1024 ** 2).toFixed(2)} MiB`);
+    console.log('Provider storage quota: unavailable through PostgreSQL; inspect the managed provider plan.');
+  } catch {
+    console.log('PostgreSQL is unreachable; database size cannot be measured.');
+    process.exitCode = 1;
+  } finally { await prisma.$disconnect(); }
+  console.log('Cloud file storage: not configured. No Firebase project is connected.');
+}
+main().catch(() => { console.error('Storage report could not complete.'); process.exitCode = 1; });

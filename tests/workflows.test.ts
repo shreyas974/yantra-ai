@@ -1,76 +1,15 @@
-import { describe, it, expect } from "vitest";
-import { hashPassword, verifyPassword } from "@/lib/auth";
-
-describe("Authentication & Security Workflows", () => {
-  it("hashes password with salt and successfully verifies match", async () => {
-    const raw = "SecureP@ssw0rd2026!";
-    const hash = await hashPassword(raw);
-
-    expect(hash).not.toBe(raw);
-    expect(hash).toMatch(/^\$2[aby]\$/);
-
-    const valid = await verifyPassword(raw, hash);
-    expect(valid).toBe(true);
-
-    const invalid = await verifyPassword("WrongPassword", hash);
-    expect(invalid).toBe(false);
-  });
-
-  it("rejects token reuse and handles token expiry logic", () => {
-    const now = new Date();
-    const futureDate = new Date(now.getTime() + 60 * 60 * 1000);
-    const pastDate = new Date(now.getTime() - 60 * 60 * 1000);
-
-    // Active token
-    const tokenRecord = {
-      usedAt: null as Date | null,
-      expiresAt: futureDate,
-    };
-    const isValid = !tokenRecord.usedAt && tokenRecord.expiresAt > now;
-    expect(isValid).toBe(true);
-
-    // Simulated use
-    tokenRecord.usedAt = new Date();
-    const isReusable = !tokenRecord.usedAt && tokenRecord.expiresAt > now;
-    expect(isReusable).toBe(false);
-
-    // Expired token
-    const expiredRecord = {
-      usedAt: null,
-      expiresAt: pastDate,
-    };
-    const isExpired = expiredRecord.expiresAt < now;
-    expect(isExpired).toBe(true);
-  });
-
-  it("enforces team capacity boundaries (1 to 4 members)", () => {
-    const minSize = 1;
-    const maxSize = 4;
-
-    const checkCapacity = (currentCount: number) => {
-      return currentCount < maxSize;
-    };
-
-    expect(checkCapacity(1)).toBe(true);
-    expect(checkCapacity(3)).toBe(true);
-    expect(checkCapacity(4)).toBe(false);
-    expect(checkCapacity(5)).toBe(false);
-  });
-
-  it("verifies registration submission prerequisites logic", () => {
-    const participant = {
-      emailVerified: true,
-      profileCompleted: true,
-      rulesAccepted: true,
-    };
-
-    const isEligible = participant.emailVerified && participant.profileCompleted && participant.rulesAccepted;
-    expect(isEligible).toBe(true);
-
-    const unverified = { ...participant, emailVerified: false };
-    expect(unverified.emailVerified && unverified.profileCompleted && unverified.rulesAccepted).toBe(false);
-
-    const unacceptedRules = { ...participant, rulesAccepted: false };
-    expect(unacceptedRules.emailVerified && unacceptedRules.profileCompleted && unacceptedRules.rulesAccepted).toBe(false);
-  });
+import { describe, it, expect } from 'vitest';
+import { hashPassword, verifyPassword, digestToken } from '@/lib/auth';
+import { activeToken, assertDeadline, assertEditable, assertTeamSize, assertTransition, passwordSchema, safeUrl } from '@/lib/policies';
+import { escapeHtml } from '@/lib/email';
+describe('Authentication and registration policies', () => {
+    it('salts passwords and rejects incorrect passwords', async () => { const hash = await hashPassword('strong-example-password'); expect(hash).not.toContain('strong-example'); expect(await verifyPassword('strong-example-password', hash)).toBe(true); expect(await verifyPassword('incorrect', hash)).toBe(false); });
+    it('hashes bearer tokens deterministically without storing the bearer', () => { expect(digestToken('a')).toHaveLength(64); expect(digestToken('a')).not.toBe('a'); expect(digestToken('a')).not.toBe(digestToken('b')); });
+    it('rejects used and expired tokens', () => { const now = new Date('2030-01-01T00:00:00Z'); expect(activeToken({ usedAt: null, expiresAt: new Date('2030-01-02') }, now)).toBe(true); expect(activeToken({ usedAt: now, expiresAt: new Date('2030-01-02') }, now)).toBe(false); expect(activeToken({ usedAt: null, expiresAt: now }, now)).toBe(false); });
+    it('enforces absolute deadlines including missing timezone', () => { const now = new Date('2030-01-01T00:00:00Z'); expect(() => assertDeadline('2030-01-01T05:31:00+05:30', true, now)).not.toThrow(); expect(() => assertDeadline('2030-01-01T05:30:00+05:30', true, now)).toThrow(); expect(() => assertDeadline('2030-01-01T10:00', true, now)).toThrow(); expect(() => assertDeadline(undefined, true, now)).toThrow(); });
+    it('enforces team bounds and solo configuration', () => { expect(() => assertTeamSize(4, 2, 4, false, false)).not.toThrow(); expect(() => assertTeamSize(5, 2, 4, false, false)).toThrow(); expect(() => assertTeamSize(1, 2, 4, true, true)).not.toThrow(); expect(() => assertTeamSize(1, 2, 4, true, false)).toThrow(); expect(() => assertTeamSize(2, 1, 4, true, true)).toThrow(); });
+    it('locks pending and approved rosters', () => { expect(() => assertEditable('PENDING')).toThrow(); expect(() => assertEditable('APPROVED')).toThrow(); expect(() => assertEditable('REJECTED')).not.toThrow(); });
+    it('allows only pending-to-reviewed transitions', () => { expect(() => assertTransition('PENDING', 'APPROVED')).not.toThrow(); expect(() => assertTransition('PENDING', 'REJECTED')).not.toThrow(); expect(() => assertTransition('APPROVED', 'PENDING')).toThrow(); });
+    it('rejects dangerous URLs and overlong passwords', () => { expect(safeUrl.safeParse('javascript:alert(1)').success).toBe(false); expect(safeUrl.safeParse('https://example.org').success).toBe(true); expect(passwordSchema.safeParse('short').success).toBe(false); expect(passwordSchema.safeParse('🔐'.repeat(30)).success).toBe(false); });
+    it('escapes user text in branded mail', () => { expect(escapeHtml('<img src=x onerror="x">')).toBe('&lt;img src=x onerror=&quot;x&quot;&gt;'); });
 });

@@ -1,64 +1,6 @@
-import React from "react";
-import Link from "next/link";
-import { Cpu, Terminal, Shield, FileText } from "lucide-react";
-
+import Link from 'next/link';
+import { ArrowUpRight } from 'lucide-react';
+import BrandMark from './BrandMark';
 export default function Footer() {
-  return (
-    <footer className="border-t border-surface-border bg-surface/50 text-gray-400 text-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Cpu className="w-5 h-5 text-cyan-400" />
-              <span className="font-bold text-base text-white tracking-wider">CHAD</span>
-            </div>
-            <p className="text-gray-400">
-              The premier Artificial Intelligence & Machine Learning hackathon.
-            </p>
-            <p className="font-mono text-cyan-400 font-semibold tracking-wide">
-              “Code. Create. Conquer.”
-            </p>
-          </div>
-
-          <div>
-            <h4 className="text-white font-semibold mb-3 tracking-wider uppercase text-[11px]">Navigation</h4>
-            <ul className="space-y-2">
-              <li><Link href="/about" className="hover:text-cyan-400 transition-colors">About CHAD</Link></li>
-              <li><Link href="/tracks" className="hover:text-cyan-400 transition-colors">Innovation Tracks</Link></li>
-              <li><Link href="/schedule" className="hover:text-cyan-400 transition-colors">Schedule & Phases</Link></li>
-              <li><Link href="/prizes" className="hover:text-cyan-400 transition-colors">Prizes & Awards</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-white font-semibold mb-3 tracking-wider uppercase text-[11px]">Resources</h4>
-            <ul className="space-y-2">
-              <li><Link href="/rules" className="hover:text-cyan-400 transition-colors">Competition Rules</Link></li>
-              <li><Link href="/faq" className="hover:text-cyan-400 transition-colors">Frequently Asked Questions</Link></li>
-              <li><Link href="/contact" className="hover:text-cyan-400 transition-colors">Contact Organizers</Link></li>
-              <li><Link href="/privacy" className="hover:text-cyan-400 transition-colors">Privacy Policy</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-white font-semibold mb-3 tracking-wider uppercase text-[11px]">Problem Statements</h4>
-            <p className="text-gray-400 mb-2">
-              Official challenge statements are governed by the hackathon committee.
-            </p>
-            <p className="font-mono text-violet-300 text-[11px]">
-              “Problem statements will be announced soon. Stay tuned!”
-            </p>
-          </div>
-        </div>
-
-        <div className="pt-8 border-t border-surface-border flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© {new Date().getFullYear()} CHAD Hackathon Platform. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <Link href="/privacy" className="hover:text-cyan-400">Privacy Policy</Link>
-            <Link href="/rules" className="hover:text-cyan-400">Rules & Code of Conduct</Link>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
+  return <footer className="site-footer"><div className="footer-top"><div className="footer-brand"><div className="flex items-center gap-3"><BrandMark className="w-11 h-11" /><span>YANTRA<span className="text-orange-300"> AI</span></span></div><p>Where curious minds meet<br />the possibilities of AI.</p><small>Code. Create. Conquer.</small></div><div><h2>Explore</h2><Link href="/about">The idea behind YANTRA</Link><Link href="/tracks">AI & ML tracks</Link><Link href="/schedule">Event timeline</Link><Link href="/prizes">Awards & recognition</Link></div><div><h2>Make your move</h2><Link href="/register">Become a participant <ArrowUpRight size={13} /></Link><Link href="/login">Student sign-in</Link><Link href="/admin">Organizer console</Link><Link href="/guest">Explore as a guest</Link></div><div><h2>Good to know</h2><Link href="/rules">Official rules</Link><Link href="/faq">Questions & answers</Link><Link href="/contact">Contact the organizers</Link><Link href="/privacy">Privacy notice</Link></div></div><div className="footer-bottom"><p>© {new Date().getFullYear()} YANTRA AI</p><p className="footer-native" lang="hi">कल्पना से निर्माण तक <span> / FROM IDEA TO CREATION</span></p><Link href="/problem-statements">Official problem statements <ArrowUpRight size={13} /></Link></div></footer>;
 }

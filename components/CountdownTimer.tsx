@@ -1,68 +1,22 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
-
-interface CountdownProps {
-  targetDateStr?: string;
-  timezone?: string;
-}
-
-export default function CountdownTimer({ targetDateStr = "To be announced.", timezone = "Asia/Kolkata" }: CountdownProps) {
-  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
-  const [isConfigured, setIsConfigured] = useState(false);
-
-  useEffect(() => {
-    if (!targetDateStr || targetDateStr === "To be announced." || isNaN(Date.parse(targetDateStr))) {
-      setIsConfigured(false);
-      return;
-    }
-
-    setIsConfigured(true);
-    const target = new Date(targetDateStr).getTime();
-
-    const interval = setInterval(() => {
-      const now = new Date().getTime();
-      const difference = target - now;
-
-      if (difference <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        clearInterval(interval);
-      } else {
-        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-        setTimeLeft({ days, hours, minutes, seconds });
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [targetDateStr]);
-
-  if (!isConfigured) {
-    return (
-      <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-xl border border-violet-500/30 bg-violet-950/20 text-violet-300 font-mono text-sm shadow-[0_0_20px_rgba(139,92,246,0.15)]">
-        <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
-        <span>Event Countdown: Dates <strong>To be announced.</strong></span>
-      </div>
-    );
-  }
-
-  if (!timeLeft) return null;
-
-  return (
-    <div className="flex items-center gap-3 font-mono">
-      {[
-        { label: "DAYS", val: timeLeft.days },
-        { label: "HOURS", val: timeLeft.hours },
-        { label: "MINS", val: timeLeft.minutes },
-        { label: "SECS", val: timeLeft.seconds },
-      ].map((item, idx) => (
-        <div key={idx} className="flex flex-col items-center p-3 rounded-lg bg-surface/80 border border-violet-500/20 min-w-[70px]">
-          <span className="text-2xl font-bold text-cyan-400">{String(item.val).padStart(2, "0")}</span>
-          <span className="text-[10px] text-gray-400 tracking-wider">{item.label}</span>
-        </div>
-      ))}
-    </div>
-  );
+'use client';
+import { useEffect, useState } from 'react';
+export default function CountdownTimer({ targetDateStr = '', timezone = 'UTC' }: {
+    targetDateStr?: string;
+    timezone?: string;
+}) {
+    const [remaining, setRemaining] = useState<number | null>(null);
+    const valid = /^\d{4}-\d\d-\d\dT.*(?:Z|[+-]\d\d:\d\d)$/.test(targetDateStr) && Number.isFinite(Date.parse(targetDateStr));
+    useEffect(() => { if (!valid) {
+        setRemaining(null);
+        return;
+    } const tick = () => setRemaining(Math.max(0, Date.parse(targetDateStr) - Date.now())); tick(); const id = setInterval(tick, 1000); return () => clearInterval(id); }, [targetDateStr, valid]);
+    if (!valid)
+        return <p className="text-xs text-gray-400 font-mono">COUNTDOWN<br /><span className="text-gray-200 mt-2 inline-block">Dates to be announced</span></p>;
+    if (remaining === null)
+        return <p className="text-xs text-gray-400">Loading countdown…</p>;
+    if (remaining === 0)
+        return <p className="text-xs text-orange-200">Event start time reached.<br />Check the official schedule.</p>;
+    const seconds = Math.floor(remaining / 1000);
+    const values = [Math.floor(seconds / 86400), Math.floor(seconds / 3600) % 24, Math.floor(seconds / 60) % 60, seconds % 60];
+    return <div role="timer" aria-label={`Countdown to event in ${timezone}`}><div className="flex gap-3">{values.map((v, i) => <div className="text-center" key={i}><strong className="text-xl font-mono text-current">{String(v).padStart(2, '0')}</strong><span className="block text-[11px] text-gray-500">{['DAYS', 'HRS', 'MIN', 'SEC'][i]}</span></div>)}</div><p className="text-[11px] text-gray-500 mt-2">{timezone}</p></div>;
 }

@@ -1,164 +1,39 @@
-import Link from "next/link";
-import { Cpu, Terminal, Users, Award, Shield, ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
-import CountdownTimer from "@/components/CountdownTimer";
-import { getEventConfigMap, getPublicStats } from "@/lib/event-config";
-
-export const dynamic = "force-dynamic";
-
-export default async function HomePage() {
-  const [config, stats] = await Promise.all([
-    getEventConfigMap(),
-    getPublicStats(),
-  ]);
-
-  const eventDates = config["event_dates"] || "To be announced.";
-  const eventTimezone = config["event_timezone"] || "Asia/Kolkata";
-  const eventVenue = config["event_venue"] || "To be announced.";
-  const registrationOpen = config["registration_open"] === "true";
-
-  let tracks = [];
-  try {
-    tracks = JSON.parse(config["tracks"] || "[]");
-  } catch {
-    tracks = [];
-  }
-
-  return (
-    <div className="space-y-24 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      {/* Hero Section */}
-      <section className="relative text-center space-y-8 pt-10 pb-16">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-950/20 text-cyan-300 text-xs font-mono uppercase tracking-widest shadow-[0_0_15px_rgba(6,182,212,0.2)]">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Artificial Intelligence & Machine Learning Hackathon</span>
-        </div>
-
-        <div className="space-y-4 max-w-4xl mx-auto">
-          <h1 className="text-5xl sm:text-7xl font-extrabold tracking-tight text-white">
-            CHAD
-          </h1>
-          <p className="text-2xl sm:text-3xl font-mono text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-cyan-400 to-emerald-400 font-bold">
-            “Code. Create. Conquer.”
-          </p>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-            Unite with the next generation of AI engineers, researchers, and innovators.
-            Tackle frontier challenges in neural architecture, vision systems, and generative intelligence.
-          </p>
-        </div>
-
-        {/* Real Countdown */}
-        <div className="flex justify-center pt-2">
-          <CountdownTimer targetDateStr={eventDates} timezone={eventTimezone} />
-        </div>
-
-        {/* CTA Buttons */}
-        <div className="flex flex-wrap justify-center gap-4 pt-4">
-          <Link
-            href="/register"
-            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-black bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 hover:opacity-95 shadow-[0_0_25px_rgba(6,182,212,0.4)] transition-all transform hover:-translate-y-0.5"
-          >
-            Register Now
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-          <Link
-            href="/problem-statements"
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-medium text-gray-200 bg-surface hover:bg-surface-muted border border-surface-border transition-colors"
-          >
-            Problem Statements
-          </Link>
-        </div>
-
-        {/* Key Event Badges */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-6 text-sm">
-          <div className="p-4 rounded-xl bg-surface/60 border border-surface-border flex flex-col items-center">
-            <span className="text-gray-400 text-xs uppercase tracking-wider">Dates</span>
-            <span className="text-white font-semibold mt-1">{eventDates}</span>
-          </div>
-          <div className="p-4 rounded-xl bg-surface/60 border border-surface-border flex flex-col items-center">
-            <span className="text-gray-400 text-xs uppercase tracking-wider">Venue</span>
-            <span className="text-white font-semibold mt-1">{eventVenue}</span>
-          </div>
-          <div className="p-4 rounded-xl bg-surface/60 border border-surface-border flex flex-col items-center">
-            <span className="text-gray-400 text-xs uppercase tracking-wider">Status</span>
-            <span className={`font-semibold mt-1 ${registrationOpen ? "text-emerald-400" : "text-amber-400"}`}>
-              {registrationOpen ? "Registrations Open" : "Registrations Opening Soon"}
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* Real Database Metrics Section */}
-      <section className="border border-surface-border rounded-2xl bg-surface/40 backdrop-blur p-8 sm:p-10">
-        <div className="text-center mb-8">
-          <h2 className="text-xs uppercase tracking-widest text-cyan-400 font-mono">Live Ecosystem Metrics</h2>
-          <p className="text-2xl font-bold text-white mt-1">Real-Time Participation</p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          <div className="p-6 rounded-xl bg-surface/80 border border-surface-border">
-            <div className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">
-              {stats.participants}
-            </div>
-            <div className="text-xs text-gray-400 uppercase tracking-wider mt-2 font-mono">Verified Participants</div>
-          </div>
-          <div className="p-6 rounded-xl bg-surface/80 border border-surface-border">
-            <div className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">
-              {stats.teams}
-            </div>
-            <div className="text-xs text-gray-400 uppercase tracking-wider mt-2 font-mono">Formed Teams</div>
-          </div>
-          <div className="p-6 rounded-xl bg-surface/80 border border-surface-border">
-            <div className="text-4xl font-extrabold text-violet-400">
-              {tracks.length}
-            </div>
-            <div className="text-xs text-gray-400 uppercase tracking-wider mt-2 font-mono">AI/ML Tracks</div>
-          </div>
-          <div className="p-6 rounded-xl bg-surface/80 border border-surface-border">
-            <div className="text-4xl font-extrabold text-emerald-400">
-              1-4
-            </div>
-            <div className="text-xs text-gray-400 uppercase tracking-wider mt-2 font-mono">Team Size Limit</div>
-          </div>
-        </div>
-      </section>
-
-      {/* Tracks Preview */}
-      <section className="space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <h2 className="text-xs uppercase tracking-widest text-violet-400 font-mono">Focus Domains</h2>
-            <p className="text-3xl font-extrabold text-white mt-1">Hackathon Innovation Tracks</p>
-          </div>
-          <Link href="/tracks" className="inline-flex items-center gap-1.5 text-sm text-cyan-400 hover:underline">
-            View All Tracks <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {tracks.map((track: any) => (
-            <div
-              key={track.id}
-              className="group p-6 rounded-2xl bg-surface/60 border border-surface-border hover:border-violet-500/50 hover:bg-surface/90 transition-all"
-            >
-              <div className="w-10 h-10 rounded-lg bg-violet-950/50 border border-violet-500/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Cpu className="w-5 h-5 text-violet-400" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">{track.title}</h3>
-              <p className="text-sm text-gray-400 leading-relaxed">{track.description}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Problem Statement Notice */}
-      <section className="p-8 rounded-2xl bg-gradient-to-r from-violet-950/40 via-surface to-cyan-950/40 border border-violet-500/30 text-center space-y-4">
-        <h3 className="text-xl font-bold text-white">Official Problem Statements</h3>
-        <p className="text-cyan-300 font-mono text-base font-semibold">
-          “Problem statements will be announced soon. Stay tuned!”
-        </p>
-        <p className="text-xs text-gray-400 max-w-xl mx-auto">
-          Statements and evaluation criteria are released simultaneously to all registered teams to ensure fairness.
-        </p>
-      </section>
-    </div>
-  );
+import Link from 'next/link';
+import { ArrowUpRight, ArrowRight, AudioLines, BrainCircuit, Code2, Eye, GraduationCap, MapPin, MoveUpRight, ShieldCheck, Sparkles, Trophy, Users, CalendarDays, Workflow } from 'lucide-react';
+import { getEventConfigMap, getPublicStats } from '@/lib/event-config';
+import CountdownTimer from '@/components/CountdownTimer';
+import YantraField from '@/components/YantraField';
+import LiveParticipation from '@/components/LiveParticipation';
+import Tilt from '@/components/Tilt';
+export const dynamic = 'force-dynamic';
+const suggestedDomains = [
+  { title: 'Generative AI', description: 'New ways to imagine, create and collaborate.', icon: Sparkles, code: 'GEN / AI' },
+  { title: 'Computer vision', description: 'Make sense of the world beyond the screen.', icon: Eye, code: 'CV / ML' },
+  { title: 'Natural language', description: 'Give human language a new dimension.', icon: AudioLines, code: 'NLP / AI' },
+  { title: 'Intelligent systems', description: 'Connect learning with meaningful action.', icon: Workflow, code: 'SYS / ML' },
+];
+function list(value?: string): any[] { try { const parsed = JSON.parse(value || '[]'); return Array.isArray(parsed) ? parsed : []; } catch { return []; } }
+export default async function Home() {
+  const [c, stats] = await Promise.all([getEventConfigMap().catch(() => ({} as Record<string, string>)), getPublicStats().catch(() => null)]);
+  const prizes = list(c.prizes);
+  const tracks = list(c.tracks), schedule = list(c.schedule), sponsors = list(c.sponsors), faqs = list(c.faqs);
+  const domains = tracks.length ? tracks.map((track, i) => ({ ...track, icon: suggestedDomains[i % 4].icon, code: `TRACK / ${String(i + 1).padStart(2, '0')}` })) : suggestedDomains;
+  return <div className="yantra-home">
+    <div className="event-ribbon"><span><span className="ribbon-dot" />{c.registration_open === 'true' ? 'REGISTRATIONS ARE OPEN' : 'A NEW SPACE FOR CURIOUS MINDS'}</span><Link href="/guest">Find your way in <ArrowUpRight size={14} /></Link></div>
+    <section className="yantra-hero">
+      <div className="hero-story"><p className="overline"><span className="tiny-cross">✳</span> YANTRA AI / THE AI & ML HACKATHON</p><h1>Intelligence.<br />Made by <em>you.</em></h1><p className="hero-description">A spark in the classroom. A late-night idea. A team that sees things differently. Bring it all together, and build what comes next.</p><div className="hero-actions"><Link href="/register" className="button-ink">Join the hackathon <ArrowUpRight size={18} /></Link><Link href="#discover" className="button-text">Discover YANTRA <ArrowRight size={17} /></Link></div><div className="hero-note"><span className="hero-note-line" /><p>Code. Create. Conquer.<small>ROOTED IN CURIOSITY. OPEN TO POSSIBILITY.</small></p></div></div>
+      <YantraField />
+      <div className="hero-index"><span>01 — IDEAS INTO INTELLIGENCE</span><span>SCROLL TO DISCOVER ↓</span></div>
+    </section>
+    <section className="event-facts" aria-label="Event details"><div><CalendarDays size={20} /><p><span>THE DATE</span><strong>{c.event_dates || 'To be announced'}</strong></p></div><div><MapPin size={20} /><p><span>THE PLACE</span><strong>{c.event_venue || 'To be announced'}</strong></p></div><div><Users size={20} /><p><span>THE TEAM</span><strong>{c.min_team_size && c.max_team_size ? `${c.min_team_size}–${c.max_team_size} members` : 'Details coming soon'}</strong></p></div><div className="event-countdown"><CountdownTimer targetDateStr={c.event_starts_at} timezone={c.event_timezone || 'UTC'} /></div></section>
+    <section id="discover" className="y-section mission-section"><div><p className="overline">THE IDEA BEHIND YANTRA</p><h2>Indian ingenuity.<br /><em>Unbounded possibility.</em></h2></div><div className="mission-copy"><p>Great technology begins with people who ask better questions. YANTRA AI brings students, developers and AI enthusiasts together to explore, experiment and create.</p><p>Find your people. Stretch what you know. Turn a possibility into a working idea, one thoughtful line of code at a time.</p><Link href="/about" className="inline-link">Get to know YANTRA <ArrowUpRight size={17} /></Link></div><div className="mission-pillars">{[{ icon: Code2, title: 'Make something real', description: 'Move from an idea to a working prototype.' }, { icon: Users, title: 'Build with your people', description: 'Different perspectives. A shared ambition.' }, { icon: BrainCircuit, title: 'Learn by doing', description: 'Explore AI and ML through hands-on creation.' }].map(({ icon: Icon, title, description }) => <article key={title}><Icon size={24} strokeWidth={1.4} /><h3>{title}</h3><p>{description}</p></article>)}</div></section>
+    <section className="tracks-section"><div className="y-section"><div className="y-section-heading"><div><p className="overline">A FIELD OF POSSIBILITIES</p><h2>Follow your <em>curiosity.</em></h2></div><Link href="/tracks" className="inline-link">Explore the tracks <ArrowUpRight size={18} /></Link></div><p className="section-intro">{tracks.length ? 'Official competition tracks published by the organizers.' : 'Suggested areas to explore. Official competition tracks are not yet finalized.'}</p><div className="y-track-grid">{domains.map(({ title, description, icon: Icon, code }, i) => <Tilt key={title}><Link href="/tracks" className="y-track"><div className="track-top"><Icon size={29} strokeWidth={1.3} /><span>{String(i + 1).padStart(2, '0')}</span></div><h3>{title}</h3><p>{description}</p><div className="track-bottom"><span>{code}</span><ArrowUpRight size={20} /></div></Link></Tilt>)}</div><div className="y-statement"><ShieldCheck size={22} /><div><strong>Fair starts. Fresh ideas.</strong><p>Problem statements will be announced soon. Stay tuned!</p></div><Link href="/problem-statements" aria-label="View official problem statements"><ArrowUpRight size={24} /></Link></div></div></section>
+    <section className="y-section journey-section"><div className="y-section-heading"><div><p className="overline">SMALL STEPS. BIG POSSIBILITIES.</p><h2>From “what if”<br />to <em>“we built it.”</em></h2></div><Link href="/schedule" className="inline-link">View the timeline <ArrowUpRight size={18} /></Link></div><div className="y-steps">{[['01', 'Find your starting point', 'Create your account, verify your email and tell us a little about yourself.'], ['02', 'Bring your minds together', 'Create a team or join your collaborators through a secure invitation.'], ['03', 'Make your move', 'Accept the official rules and submit your registration for organizer review.']].map(([number, title, description]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{description}</p></article>)}</div>{schedule.length > 0 && <div className="schedule-peek">{schedule.slice(0, 3).map((item, i) => <div key={i}><span>{item.time}</span><strong>{item.phase}</strong></div>)}</div>}</section>
+    <section className="community-band"><div className="community-copy"><p className="overline">THE COMMUNITY, AS IT GROWS</p><h2>Every mind<br />adds <em>something.</em></h2><p>Participation counts come from verified database records.</p></div><div className="participation-grid"><LiveParticipation initial={stats} /></div></section>
+    <section className="y-section role-section"><div className="y-section-heading"><div><p className="overline">YOUR SPACE TO MAKE IT HAPPEN</p><h2>One hackathon.<br /><em>Two sides of the story.</em></h2></div><Link className="inline-link" href="/guest">Just looking? Explore as a guest <ArrowUpRight size={17} /></Link></div><div className="role-grid"><Tilt max={5}><article className="role-card student-card"><div className="role-card-top"><GraduationCap size={29} strokeWidth={1.4} /><span>FOR THE BUILDERS</span></div><h3>Your idea.<br />Your team. Your moment.</h3><p>Manage your profile, bring your team together, and follow your registration from one student workspace.</p><Link href="/register" className="button-ink">Student registration <ArrowUpRight size={18} /></Link><Link href="/login" className="inline-link">Already registered? Sign in <ArrowRight size={15} /></Link></article></Tilt><Tilt max={5}><article className="role-card organizer-card"><div className="role-card-top"><ShieldCheck size={29} strokeWidth={1.4} /><span>FOR THE ORGANIZERS</span></div><h3>Bring the<br />whole event together.</h3><p>Configure the event, review students and teams, publish updates and keep registrations moving.</p><Link href="/admin" className="button-paper">Open organizer console <ArrowUpRight size={18} /></Link><span className="role-access-note">For authorized event administrators.</span></article></Tilt></div></section>
+    <section className="y-section recognition-section"><div><p className="overline">GOOD IDEAS DESERVE A MOMENT</p><h2>Build for the learning.<br /><em>Stay for the possibility.</em></h2><p>Awards, eligibility and event details will be published by the organizing team.</p><Link className="inline-link" href="/prizes">Awards & recognition <ArrowUpRight size={17} /></Link></div><div className="prize-placeholder"><Trophy size={48} strokeWidth={1} /><span>AWARDS & RECOGNITION</span><strong>{prizes.length ? prizes[0].title : 'To Be Announced'}</strong><p>{prizes.length ? prizes[0].description : 'No prize details have been published yet.'}</p></div></section>
+    <section className="y-section partners-section"><div><p className="overline">THE PEOPLE BEHIND THE PLATFORM</p><h2>Built <em>together.</em></h2></div><div><p className="partners-label">SPONSORS & PARTNERS</p>{sponsors.length ? <div className="partner-list">{sponsors.map(s => s.url ? <a key={s.id} href={s.url} rel="noopener noreferrer">{s.title} <ArrowUpRight size={15} /></a> : <span key={s.id}>{s.title}</span>)}</div> : <p>To be announced.</p>}<p className="partners-label mt-6">ORGANIZING TEAM</p><p>{c.organizers || 'To be announced.'}</p><p className="partners-label mt-6">ELIGIBILITY</p><p>{c.eligibility || 'Official eligibility criteria will be published by the organizers.'}</p></div></section>
+    <section className="y-section questions-section"><div><p className="overline">BEFORE YOU BEGIN</p><h2>A little<br /><em>more clarity.</em></h2><Link href="/contact" className="inline-link">Ask the organizers <ArrowUpRight size={17} /></Link></div><div>{faqs.length ? faqs.slice(0, 5).map((faq, i) => <details className="y-faq" key={i}><summary>{faq.q}<span>+</span></summary><p>{faq.a}</p></details>) : <div className="empty-faq"><p>Organizer FAQs will be published soon.</p><Link href="/faq" className="inline-link">Visit the FAQ page <ArrowUpRight size={17} /></Link></div>}</div></section>
+    <section className="y-final"><p className="overline">THE NEXT CHAPTER STARTS WITH YOU</p><h2>Bring your curiosity.<br /><em>Build your possibility.</em></h2><Link href="/register" className="button-ink">Begin your YANTRA journey <ArrowUpRight size={19} /></Link><p>Account creation is the first step. Event admission is subject to organizer review.</p><span className="final-native" lang="hi" aria-hidden="true">यन्त्र</span></section>
+  </div>;
 }

@@ -1,74 +1,16 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
-
+import { loadEnvConfig } from '@next/env';
+loadEnvConfig(process.cwd());
+import { db } from '../lib/db';
 async function main() {
-  const args = process.argv.slice(2);
-  const email = args[0]?.trim();
-  const hasConfirm = args.includes("--confirm");
-
-  if (!email || email === "YOUR_EMAIL_ADDRESS" || email.startsWith("--")) {
-    console.error("Error: Please provide a valid email address.");
-    console.error("Usage: npm run admin:promote -- user@example.com --confirm");
-    process.exit(1);
-  }
-
-  if (!hasConfirm) {
-    console.error("Error: Destructive/privilege action requires --confirm flag.");
-    console.error(`Run: npm run admin:promote -- ${email} --confirm`);
-    process.exit(1);
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email: email.toLowerCase() },
+  const email = process.argv[2]?.trim().toLowerCase();
+  if (!email || !process.argv.includes('--confirm')) throw new Error('Usage: npm run admin:promote -- verified-address@example.com --confirm');
+  await db.transaction(async tx => {
+    const user = await tx.user.findUnique({ where: { email } });
+    if (!user?.emailVerified) throw new Error('Create and verify the account before granting organizer access.');
+    await tx.user.update({ where: { id: user.id }, data: { role: 'ADMIN' } });
+    await tx.session.deleteMany({ where: { userId: user.id } });
+    await tx.auditLog.create({ data: { userId: user.id, action: 'ADMIN_PROMOTED_VIA_CLI', entityType: 'User', entityId: user.id } });
   });
-
-  if (!user) {
-    console.error(`Error: User with email "${email}" not found.`);
-    process.exit(1);
-  }
-
-  if (!user.emailVerified) {
-    console.error(`Error: User "${email}" has not verified their email yet.`);
-    console.error("Please verify the account first before promoting to admin.");
-    process.exit(1);
-  }
-
-  if (user.role === "ADMIN") {
-    console.log(`User "${email}" is already an Administrator.`);
-    process.exit(0);
-  }
-
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: user.id },
-      data: { role: "ADMIN" },
-    }),
-    prisma.session.deleteMany({
-      where: { userId: user.id },
-    }),
-    prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: "ADMIN_PROMOTED_VIA_CLI",
-        entityType: "User",
-        entityId: user.id,
-        details: JSON.stringify({ email: user.email }),
-      },
-    }),
-  ]);
-
-  console.log(`\n Successfully promoted ${email} to Administrator!`);
-  console.log("Existing sessions were revoked for security.");
-  console.log("Please sign in again to activate administrative permissions:");
-  console.log("  http://localhost:3000/login -> http://localhost:3000/admin\n");
+  console.log('Organizer access granted. Sign in again to open /admin.');
 }
-
-main()
-  .catch((e) => {
-    console.error("Promotion failed:", e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch(error => { console.error(error.message); process.exitCode=1; });

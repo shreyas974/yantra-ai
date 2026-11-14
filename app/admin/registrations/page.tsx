@@ -62,7 +62,7 @@ export default function AdminRegistrationsPage() {
             download
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-surface-border text-xs text-gray-200 hover:text-white"
           >
-            <Download className="w-3.5 h-3.5 text-cyan-400" />
+            <Download className="w-3.5 h-3.5 text-orange-300" />
             Export Participants CSV
           </a>
           <a
@@ -84,7 +84,7 @@ export default function AdminRegistrationsPage() {
               key={st}
               onClick={() => setFilter(st)}
               className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-                filter === st ? "bg-cyan-500/20 text-cyan-300 font-bold" : "text-gray-400 hover:text-white"
+                filter === st ? "bg-cyan-500/20 text-orange-200 font-bold" : "text-gray-400 hover:text-white"
               }`}
             >
               {st}
@@ -104,7 +104,7 @@ export default function AdminRegistrationsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by Registration ID, Team Name, or Email"
-            className="flex-1 px-3 py-1.5 rounded-lg bg-background border border-surface-border text-white text-xs focus:border-cyan-400 focus:outline-none"
+            className="flex-1 px-3 py-1.5 rounded-lg bg-background border border-surface-border text-white text-xs focus:border-orange-300 focus:outline-none"
           />
           <button
             type="submit"
@@ -131,7 +131,7 @@ export default function AdminRegistrationsPage() {
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-cyan-400 font-bold text-sm">
+                  <span className="font-mono text-orange-300 font-bold text-sm">
                     {sub.registrationId}
                   </span>
                   <span className="text-white font-bold text-base">{sub.team.name}</span>
@@ -176,7 +176,7 @@ export default function AdminRegistrationsPage() {
                       {m.user.profile?.fullName || m.user.email}
                     </div>
                     <div className="text-[11px] text-gray-400 truncate">{m.user.profile?.collegeOrg || "No Org"}</div>
-                    <div className="text-[10px] text-cyan-400 font-mono truncate">{m.user.profile?.skills || "N/A"}</div>
+                    <div className="text-[10px] text-orange-300 font-mono truncate">{m.user.profile?.skills || "N/A"}</div>
                   </div>
                 ))}
               </div>

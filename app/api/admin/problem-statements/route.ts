@@ -1,57 +1,43 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
-import { logAuditEvent } from "@/lib/audit";
-
-const problemSchema = z.object({
-  title: z.string().min(3),
-  track: z.string().min(2),
-  description: z.string().min(10),
-  datasetsUrl: z.string().url().optional().or(z.literal("")).nullable(),
-  evaluationCriteria: z.string().optional().nullable(),
-});
-
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { db } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
+import { safeUrl } from '@/lib/policies';
+const schema = z.object({ id: z.string().optional(), identifier: z.string().trim().min(1).max(50).optional().nullable(), title: z.string().trim().min(3).max(200), track: z.string().trim().max(200).default(''), trackId: z.string().optional().nullable(), description: z.string().min(10).max(30000), datasetsUrl: safeUrl.optional().or(z.literal('')).nullable(), evaluationCriteria: z.string().max(10000).optional().nullable(), status: z.enum(['DRAFT', 'PUBLISHED']).default('DRAFT') });
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const statements = await prisma.problemStatement.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-
-  return NextResponse.json({ statements });
+    const user = await getCurrentUser();
+    if (user?.role !== 'ADMIN')
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    return NextResponse.json({ statements: await db.problemStatement.findMany({ orderBy: { createdAt: 'desc' } }) });
 }
-
-export async function POST(req: NextRequest) {
-  const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  try {
-    const body = await req.json();
-    const result = problemSchema.safeParse(body);
-    if (!result.success) {
-      return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
+async function save(req: NextRequest, edit: boolean) {
+    const user = await getCurrentUser();
+    if (user?.role !== 'ADMIN')
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    try {
+        const { id, ...data } = schema.parse(await req.json());
+        if (edit && !id)
+            return NextResponse.json({ error: 'Statement ID required' }, { status: 400 });
+        if (data.status === 'PUBLISHED' && !data.identifier)
+            return NextResponse.json({ error: 'Assign an official identifier before publishing.' }, { status: 400 });
+        const statement = edit ? await db.problemStatement.update({ where: { id }, data }) : await db.problemStatement.create({ data });
+        await db.auditLog.create({ data: { userId: user.id, action: 'PROBLEM_STATEMENT_SAVED', entityType: 'ProblemStatement', entityId: statement.id } });
+        return NextResponse.json({ success: true, statement });
     }
-
-    const statement = await prisma.problemStatement.create({
-      data: result.data,
-    });
-
-    await logAuditEvent({
-      userId: user.id,
-      action: "PROBLEM_STATEMENT_CREATED",
-      entityType: "ProblemStatement",
-      entityId: statement.id,
-    });
-
-    return NextResponse.json({ success: true, statement });
-  } catch (error: any) {
-    console.error("Problem statement error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+    catch {
+        return NextResponse.json({ error: 'Check required fields, identifier uniqueness and resource URL.' }, { status: 400 });
+    }
+}
+export const POST = (req: NextRequest) => save(req, false);
+export const PATCH = (req: NextRequest) => save(req, true);
+export async function DELETE(req: NextRequest) {
+    const user = await getCurrentUser();
+    if (user?.role !== 'ADMIN')
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const { id, confirm } = await req.json();
+    if (!id || confirm !== true)
+        return NextResponse.json({ error: 'Confirm deletion.' }, { status: 400 });
+    await db.problemStatement.delete({ where: { id } });
+    await db.auditLog.create({ data: { userId: user.id, action: 'PROBLEM_STATEMENT_DELETED', entityType: 'ProblemStatement', entityId: id } });
+    return NextResponse.json({ success: true });
 }

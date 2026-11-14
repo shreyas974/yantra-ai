@@ -3,7 +3,8 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, AlertCircle, Loader2, ArrowUpRight } from "lucide-react";
+import AuthShell from "@/components/AuthShell";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -11,6 +12,11 @@ function VerifyEmailContent() {
   const [token, setToken] = useState(tokenFromUrl);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(tokenFromUrl ? "loading" : "idle");
   const [message, setMessage] = useState("");
+  const [firebaseMode, setFirebaseMode] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/auth/me").then(r => r.json()).then(d => setFirebaseMode(d.authMode === "firebase"));
+  }, []);
 
   const verifyToken = async (tok: string) => {
     setStatus("loading");
@@ -44,78 +50,66 @@ function VerifyEmailContent() {
   }, [tokenFromUrl]);
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md p-8 rounded-2xl bg-surface border border-surface-border text-center space-y-6">
-        <h1 className="text-2xl font-bold text-white">Email Verification</h1>
-
-        {status === "loading" && (
-          <div className="py-8 space-y-3">
-            <Loader2 className="w-10 h-10 text-cyan-400 animate-spin mx-auto" />
-            <p className="text-sm text-gray-300">Verifying your token with CHAD server...</p>
-          </div>
-        )}
-
-        {status === "success" && (
-          <div className="py-6 space-y-4">
-            <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
-            <h3 className="text-xl font-bold text-white">Verification Complete</h3>
-            <p className="text-sm text-gray-300">{message}</p>
-            <div className="pt-4 flex flex-col gap-2">
-              <Link
-                href="/dashboard/profile"
-                className="w-full py-2.5 rounded-xl font-bold text-black bg-cyan-400 hover:bg-cyan-300 text-sm"
-              >
-                Complete Profile
-              </Link>
-              <Link
-                href="/dashboard"
-                className="w-full py-2.5 rounded-xl text-gray-300 bg-surface-muted hover:bg-surface-border text-sm"
-              >
-                Go to Dashboard
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {status === "error" && (
-          <div className="py-6 space-y-4">
-            <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
-            <h3 className="text-xl font-bold text-white">Verification Failed</h3>
-            <p className="text-sm text-red-300">{message}</p>
-            <p className="text-xs text-gray-400">Tokens are single-use and expire in 24 hours.</p>
-          </div>
-        )}
-
-        {status === "idle" && (
-          <div className="space-y-4 text-left">
-            <p className="text-xs text-gray-400">
-              Paste the verification token from your email confirmation JSON or click the direct link in the email.
-            </p>
-            <input
-              type="text"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="Paste token here"
-              className="w-full px-3.5 py-2.5 rounded-lg bg-background border border-surface-border text-white text-sm focus:border-cyan-400 focus:outline-none"
-            />
-            <button
-              onClick={() => verifyToken(token)}
-              disabled={!token}
-              className="w-full py-2.5 rounded-xl font-bold text-black bg-cyan-400 hover:bg-cyan-300 disabled:opacity-50 text-sm"
-            >
-              Verify Now
-            </button>
-          </div>
-        )}
+    <>
+      <div className="auth-head">
+        <p className="eyebrow">EMAIL VERIFICATION</p>
+        <h2>Confirm your email</h2>
       </div>
-    </div>
+
+      {status === "loading" && (
+        <div className="auth-success" role="status">
+          <span className="auth-success-icon"><Loader2 size={30} className="animate-spin" /></span>
+          <p>Verifying your link…</p>
+        </div>
+      )}
+
+      {status === "success" && (
+        <div className="auth-success" role="status">
+          <span className="auth-success-icon"><CheckCircle2 size={30} /></span>
+          <h2>You’re verified.</h2>
+          <p>{message}</p>
+          <Link href="/dashboard/profile" className="auth-submit">Complete your profile <ArrowUpRight size={18} /></Link>
+          <Link href="/dashboard" className="auth-ghost">Go to dashboard</Link>
+        </div>
+      )}
+
+      {status === "error" && (
+        <div className="auth-success" role="alert">
+          <span className="auth-success-icon is-error"><AlertCircle size={30} /></span>
+          <h2>Verification failed.</h2>
+          <p>{message}</p>
+          <p className="auth-fine">Links are single-use and expire after 24 hours. Sign in and resend one from Account settings.</p>
+          <Link href="/login" className="auth-ghost">Go to sign in</Link>
+        </div>
+      )}
+
+      {status === "idle" && firebaseMode && (
+        <div className="auth-form">
+          <p className="auth-copy">Open the verification link we emailed you. Once verified, sign in to continue your registration.</p>
+          <Link href="/login" className="auth-submit">Continue to sign in <ArrowUpRight size={18} /></Link>
+          <Link href="/dashboard/settings" className="auth-ghost">Request another verification email</Link>
+        </div>
+      )}
+
+      {status === "idle" && !firebaseMode && (
+        <div className="auth-form">
+          <div className="auth-field">
+            <label htmlFor="verify-token">Verification token</label>
+            <input id="verify-token" type="text" value={token} onChange={(e) => setToken(e.target.value)} placeholder="Paste the token from your email" />
+          </div>
+          <button onClick={() => verifyToken(token)} disabled={!token} className="auth-submit">Verify now <ArrowUpRight size={18} /></button>
+        </div>
+      )}
+    </>
   );
 }
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<div className="text-center py-20 text-gray-400">Loading...</div>}>
-      <VerifyEmailContent />
-    </Suspense>
+    <AuthShell eyebrow="ALMOST THERE" title={<>One click<br /><em>and you’re in.</em></>} intro="Verifying your email unlocks your profile, team creation and event registration.">
+      <Suspense fallback={<p className="auth-fine">Loading…</p>}>
+        <VerifyEmailContent />
+      </Suspense>
+    </AuthShell>
   );
 }
